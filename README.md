@@ -78,13 +78,99 @@ The process starts by connecting to the raw datasets (Customers and Cusomers_Det
 ![Data Flow Source Setup_Get Source 1](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/Image/source%201.png)
 ![Get Source 2](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/Image/source%202.png)
 
-### 2. Transformation & Cleaning Steps
-Once the data is ingested into the flow, the following transformations are applied:
 
-* **Handling Missing Values:** Using a `Derived Column` to replace 'NAS' or Null values with 'Unknown'.
-* **Relational Join:** Performing a `Full Outer Join` on `Cst_ID`.
-* **Data Formatting:** Normalizing text fields to Uppercase.
 
-**The Transformation Logic (Snippet):**
+### 2. Data Transformation & Standardization (Derived Columns)
+In this stage, I used the **Expression Builder** within the Derived Column transformation to clean and standardize categorical data.
+
+#### A. Standardizing Marital Status
+The raw dataset used single-letter codes (`S`, `M`). I mapped these to full descriptive strings using the following logic:
+
+**Transformation Logic:**
 ```sql
-iif(isNull(ColumnName) || ColumnName == 'NAS', 'Unknown', ColumnName)
+iif(upper(trim(Marital_Status)) == 'S', 'Single', 
+    iif(upper(trim(Marital_Status)) == 'M', 'Married', 
+        upper(trim(Marital_Status))
+    )
+)
+```
+![tran 1](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/Image/tran%201.png)
+
+#### B. Standardizing Gender
+Similarly, the Gender column was normalized from codes (F, M) to full titles to ensure data consistency:
+
+**Transformation Logic:**
+```sql
+iif(upper(trim(Gender)) == 'F', 'Female', 
+    iif(upper(trim(Gender)) == 'M', 'Male', 
+        upper(trim(Gender))
+    )
+)
+```
+![tran 2](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/Image/tran%202.png)
+
+
+## 🧹 Data Cleaning (Handling "NAS" Values)
+Before merging the datasets, I had to clean the primary key column used for the join.
+
+**Why this was done:**
+The primary key column in the first table contained `"NAS"` values, while the corresponding column in the second table did not. If left uncleaned, the **Join** operation would fail to match the records properly. I replaced `"NAS"` to ensure a clean, error-free matching process between the two tables.
+
+**Transformation Logic:**
+```sql
+iif(isNull(Cst_ID) || Cst_ID == 'NAS', '', Cst_ID)
+```
+![cleaning](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/Image/Delete%20NAS.png)
+
+
+### 🔗 Data Integration (Full Outer Join)
+With the datasets cleaned and standardized, the next crucial step was merging them into a unified schema.
+
+**The Process:**
+I used a **Full Outer Join** transformation to combine the primary customer dataset with the secondary details table. The join condition was based on the `Cst_ID` column, which was previously cleaned to guarantee accurate matching.
+
+**Why Full Outer Join?**
+This ensures zero data loss. Unmatched records from both tables are retained, providing a complete, 360-degree view of all customers and their associated details, even if some attributes are missing.
+
+![Full Outer Join Configuration](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/raw/main/Image/join%201.png)
+
+### 🚀 Final Data Flow Architecture
+This is the complete visual representation of the transformation pipeline. It shows the end-to-end journey of the data, from the two initial sources, through the cleaning and standardization steps, to the final Join and Sink.
+
+
+**Key Features of this Flow:**
+* **Scalability:** The flow is designed to handle large datasets efficiently within the Azure environment.
+* **Visibility:** Each step is modular, making it easy to debug and maintain.
+* **Success Status:** The final execution confirms that all business rules were applied correctly across the entire pipeline.
+
+![End-to-End Data Flow](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/raw/main/Image/last%20Data%20flow.png)
+
+
+## 📊 Pipeline Execution & Monitoring
+To ensure the end-to-end automation of the project, I orchestrated the entire process through an **Azure Data Factory Pipeline**. 
+
+**Execution Details:**
+* **Orchestration:** The pipeline first triggers the data ingestion and then automatically starts the transformation logic.
+* **Validation:** Monitoring the execution shows that all activities were completed successfully without errors.
+
+![Pipeline Monitoring Success](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/Image/pipeline%206.png)
+
+> **Success Indicator:** The green status icons in the monitoring dashboard confirm that both the data movement and the complex transformations were executed as planned.
+
+
+## 🏁 Final Result: Data Landing (Sink)
+The transformation process is now complete, and the cleaned, unified dataset has been successfully loaded into the destination.
+
+**Final Destination:**
+The output is stored in **Azure Data Lake Storage Gen2** as a partitioned CSV file. This file is now optimized and ready for consumption by downstream applications like **Power BI** for visualization or **Azure Synapse Analytics** for further processing.
+
+**Key Deliverables:**
+- [x] Zero data loss during the Full Outer Join.
+- [x] All "NAS" and Null values handled for the Join key.
+- [x] Fully standardized columns (Gender & Marital Status).
+
+![Final Output in Container](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/raw/main/Image/test%20data%20in%20container.png)
+
+---
+### 🚀 Conclusion
+This project demonstrates a complete Cloud Data Engineering life cycle, from establishing raw HTTP connections to orchestrating complex transformations in a serverless environment.
