@@ -174,3 +174,12 @@ The output is stored in **Azure Data Lake Storage Gen2** as a partitioned CSV fi
 ---
 ### 🚀 Conclusion
 This project demonstrates a complete Cloud Data Engineering life cycle, from establishing raw HTTP connections to orchestrating complex transformations in a serverless environment.
+
+### 📊 View Processed Data
+You can explore the final cleaned and integrated dataset directly on GitHub:
+
+👉 **[Download / View Customer Data CSV](https://github.com/Ahmed800363/Azure-Data-Factory-Customer-Project/blob/main/customer_data.csv)**
+
+
+
+
